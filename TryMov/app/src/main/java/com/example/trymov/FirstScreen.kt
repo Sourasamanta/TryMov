@@ -478,7 +478,7 @@ private fun EmptyStateCard(title: String, subtitle: String) {
 
 suspend fun posterUrlFromTitle(title: String): String? {
     val res = OmdbClient.api.getByTitle(
-        apiKey = "YOUR_API_KEY",
+        apiKey = "e4b08811",
         title = title
     )
 

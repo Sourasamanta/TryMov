@@ -1,3 +1,5 @@
+package com.example.trymov
+
 import androidx.compose.ui.graphics.Color
 
 object TryMovUiColors {
@@ -8,4 +10,6 @@ object TryMovUiColors {
     val TextPrimary = Color(0xFFF5F7FA)
     val TextMuted = Color(0xFF98A2B3)
     val Field = Color(0xFF101722)
+    val Error = Color(0xFFFF6B6B)
+    val Success = Color(0xFF4CAF6E)
 }
