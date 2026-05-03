@@ -1,5 +1,6 @@
 package com.example.trymov
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,8 +18,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -38,6 +39,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.trymov.auth.LoginActivity
+import com.example.trymov.auth.TokenManager
+import com.example.trymov.ui.discover.MovieViewModelFactory
 import com.example.trymov.ui.mylist.MyListScreen
 import com.example.trymov.ui.mylist.MyListViewModel
 import com.example.trymov.ui.mylist.MyListViewModelFactory
@@ -48,14 +52,30 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Auth gate — redirect to login if no token present
+        if (!TokenManager.isLoggedIn()) {
+            startActivity(
+                Intent(this, LoginActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+            )
+            finish()
+            return
+        }
+
         val app = application as TryMovApplication
 
         setContent {
             TryMovTheme {
                 val myListVm: MyListViewModel = viewModel(
-                    factory = MyListViewModelFactory(app.container.movieRepository)
+                    factory = MyListViewModelFactory(
+                        app.container.movieRepository,
+                        app.container.interactionRepository
+                    )
                 )
-                val discoverVm: MovieViewModel = viewModel()
+                val discoverVm: MovieViewModel = viewModel(
+                    factory = MovieViewModelFactory(app.container.fastApiRepository)
+                )
 
                 TryMovApp(
                     discoverVm = discoverVm,

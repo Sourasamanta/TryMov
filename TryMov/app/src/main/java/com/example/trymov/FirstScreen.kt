@@ -46,7 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.trymov.omdb.OmdbClient
+import com.example.trymov.fastapi.ApiClient
 import com.example.trymov.fastapi.Recommendation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -477,12 +477,5 @@ private fun EmptyStateCard(title: String, subtitle: String) {
 }
 
 suspend fun posterUrlFromTitle(title: String): String? {
-    val res = OmdbClient.api.getByTitle(
-        apiKey = "e4b08811",
-        title = title
-    )
-
-    return if (res.Response == "True" && !res.Poster.isNullOrBlank() && res.Poster != "N/A") {
-        res.Poster
-    } else null
+    return runCatching { ApiClient.api.getPoster(title).poster }.getOrNull()
 }

@@ -9,6 +9,7 @@ data class MovieEntity(
     val imdbId: String,
     val tmdbId: Int,
     val title: String,
+    val overview: String? = null,
     val posterPath: String?,
     val runtime: Int,
     val genres: List<String>

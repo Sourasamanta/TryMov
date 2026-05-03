@@ -17,6 +17,7 @@ data class TmdbMovieResult(
 data class TmdbMovieDetails(
     val id: Int,
     val title: String,
+    val overview: String = "",
     @SerializedName("poster_path")
     val posterPath: String? = null,
     val runtime: Int? = null,

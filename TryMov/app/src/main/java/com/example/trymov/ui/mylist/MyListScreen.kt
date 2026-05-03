@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.ViewList
@@ -113,6 +114,25 @@ fun MyListScreen(vm: MyListViewModel) {
                 ),
                 modifier = Modifier.statusBarsPadding(),
                 actions = {
+                    IconButton(
+                        onClick = { vm.syncAll() },
+                        enabled = !uiState.isSyncing
+                    ) {
+                        if (uiState.isSyncing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = TryMovUiColors.TextMuted
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Sync from cloud",
+                                tint = TryMovUiColors.TextMuted
+                            )
+                        }
+                    }
+
                     IconButton(onClick = {
                         vm.setListMode(
                             if (uiState.listMode == ListMode.LIST) ListMode.GRID else ListMode.LIST
@@ -457,15 +477,17 @@ private fun MyListEntryCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
+                var sliderRating by remember(entry.id) { mutableStateOf(entry.rating.toFloat()) }
                 Text(
-                    text = "Rating  ${entry.rating}/10",
+                    text = "Rating  ${sliderRating.toInt()}/10",
                     color = TryMovUiColors.TextMuted,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
                 Slider(
-                    value = entry.rating.toFloat(),
-                    onValueChange = { onUpdateRating(it.toInt()) },
+                    value = sliderRating,
+                    onValueChange = { sliderRating = it },
+                    onValueChangeFinished = { onUpdateRating(sliderRating.toInt()) },
                     valueRange = 0f..10f,
                     steps = 9,
                     colors = SliderDefaults.colors(

@@ -35,15 +35,41 @@ interface MyListDao {
             m.imdbId      AS movie_imdbId,
             m.tmdbId      AS movie_tmdbId,
             m.title       AS movie_title,
+            m.overview    AS movie_overview,
             m.posterPath  AS movie_posterPath,
             m.runtime     AS movie_runtime,
             m.genres      AS movie_genres
         FROM my_list_entries e
         LEFT JOIN movies m ON m.imdbId = e.imdbId
-        ORDER BY e.isFavorite DESC, e.rating DESC, e.createdAt DESC
+        ORDER BY e.createdAt DESC
         """
     )
     fun observeEntriesWithMovies(): Flow<List<MyListEntryWithMovie>>
+
+    @Query(
+        """
+        SELECT
+            e.id,
+            e.imdbId,
+            e.rating,
+            e.status,
+            e.progressMinutes,
+            e.isFavorite,
+            e.createdAt,
+
+            m.imdbId      AS movie_imdbId,
+            m.tmdbId      AS movie_tmdbId,
+            m.title       AS movie_title,
+            m.overview    AS movie_overview,
+            m.posterPath  AS movie_posterPath,
+            m.runtime     AS movie_runtime,
+            m.genres      AS movie_genres
+        FROM my_list_entries e
+        LEFT JOIN movies m ON m.imdbId = e.imdbId
+        ORDER BY e.createdAt DESC
+        """
+    )
+    suspend fun getAllEntriesWithMovies(): List<MyListEntryWithMovie>
 
     @Query("SELECT EXISTS(SELECT 1 FROM my_list_entries WHERE imdbId = :imdbId)")
     suspend fun existsByImdbId(imdbId: String): Boolean
@@ -56,6 +82,9 @@ interface MyListDao {
 
     @Query("SELECT * FROM my_list_entries WHERE id = :id")
     suspend fun getById(id: Int): MyListEntryEntity?
+
+    @Query("SELECT * FROM my_list_entries WHERE imdbId = :imdbId LIMIT 1")
+    suspend fun getByImdbId(imdbId: String): MyListEntryEntity?
 
     @Query("DELETE FROM my_list_entries WHERE id = :id")
     suspend fun deleteById(id: Int)

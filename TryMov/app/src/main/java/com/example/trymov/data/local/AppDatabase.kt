@@ -13,7 +13,7 @@ import com.example.trymov.data.local.entity.MyListEntryEntity
         MovieEntity::class,
         MyListEntryEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(AppTypeConverters::class)

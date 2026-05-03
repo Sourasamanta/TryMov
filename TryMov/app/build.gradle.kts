@@ -12,7 +12,11 @@ val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
     localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
+
 val tmdbApiKey: String = localProperties.getProperty("TMDB_API_KEY") ?: ""
+val omdbApiKey: String = localProperties.getProperty("OMDB_API_KEY") ?: ""
+// Must end with "/" — e.g. http://54.123.45.67:8000/
+val ec2BaseUrl: String = localProperties.getProperty("EC2_BASE_URL") ?: "http://localhost:8000/"
 
 android {
     namespace = "com.example.trymov"
@@ -28,6 +32,11 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "TMDB_API_KEY", "\"$tmdbApiKey\"")
+        buildConfigField("String", "OMDB_API_KEY", "\"$omdbApiKey\"")
+        buildConfigField("String", "EC2_BASE_URL", "\"$ec2BaseUrl\"")
+
+        // AppAuth redirect scheme
+        manifestPlaceholders["appAuthRedirectScheme"] = "com.example.trymov"
     }
 
     buildTypes {
@@ -75,6 +84,9 @@ dependencies {
     // Lifecycle / MVVM
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
+
+    // AppAuth (Cognito login)
+    implementation("net.openid:appauth:0.11.1")
 
     // Compose
     implementation(libs.androidx.core.ktx)

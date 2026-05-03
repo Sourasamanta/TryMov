@@ -1,0 +1,21 @@
+[Unit]
+Description=TryMov FastAPI Backend
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/trymov
+ExecStart=/home/ubuntu/trymov/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
+Environment=AWS_DEFAULT_REGION=us-east-1
+# Fill in your Cognito values:
+Environment=COGNITO_REGION=us-east-1
+Environment=COGNITO_USER_POOL_ID=REPLACE_ME
+Environment=COGNITO_APP_CLIENT_ID=REPLACE_ME
+
+[Install]
+WantedBy=multi-user.target

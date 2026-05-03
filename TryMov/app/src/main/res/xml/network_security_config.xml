@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext only to the EC2 backend IP on port 8000 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">13.60.66.39</domain>
+    </domain-config>
+
+    <!-- Everything else (Cognito, TMDB, OMDb) must use HTTPS -->
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

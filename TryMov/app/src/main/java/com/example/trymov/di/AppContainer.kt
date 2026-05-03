@@ -2,14 +2,11 @@ package com.example.trymov.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.trymov.BuildConfig
 import com.example.trymov.data.local.AppDatabase
-import com.example.trymov.data.remote.tmdb.TmdbApi
 import com.example.trymov.data.repository.MovieRepository
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import com.example.trymov.fastapi.ApiClient
+import com.example.trymov.fastapi.FastApiRepository
+import com.example.trymov.fastapi.InteractionRepository
 
 class AppContainer(appContext: Context) {
 
@@ -19,28 +16,19 @@ class AppContainer(appContext: Context) {
             .build()
     }
 
-    private val tmdbApi: TmdbApi by lazy {
-        val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
-        }
-        val client = OkHttpClient.Builder()
-            .addInterceptor(logging)
-            .build()
-
-        Retrofit.Builder()
-            .baseUrl("https://api.themoviedb.org/3/")
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(TmdbApi::class.java)
+    val fastApiRepository: FastApiRepository by lazy {
+        FastApiRepository(ApiClient.api)
     }
 
     val movieRepository: MovieRepository by lazy {
         MovieRepository(
             movieDao = database.movieDao(),
             myListDao = database.myListDao(),
-            tmdbApi = tmdbApi,
-            tmdbApiKey = BuildConfig.TMDB_API_KEY
+            fastApiRepository = fastApiRepository
         )
+    }
+
+    val interactionRepository: InteractionRepository by lazy {
+        InteractionRepository(ApiClient.interactionApi)
     }
 }
