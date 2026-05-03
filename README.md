@@ -1,302 +1,256 @@
-# 🎬 TryMov — Intelligent Movie Discovery (Android + FastAPI)
+# TryMov — Intelligent Movie Discovery
 
-**TryMov** is a **movie recommendation app** built with **Android (Kotlin + Jetpack Compose)** and a **FastAPI backend** that returns **content-based recommendations** using **TF-IDF + cosine similarity** on the **TMDB 5000 movies dataset**.
-
-The Android app lets users search a movie title, fetches recommendations from the backend, and loads posters using the **OMDb API**.
-
----
-
-## 🚀 Overview
-
-**TryMov** focuses on:
-- Modern UI using **Jetpack Compose (Material 3)**
-- Clean UI states: loading, empty state, results list
-- Backend recommendations via **TF-IDF Vectorizer + Cosine Similarity**
-- Poster fetching via **OMDb API**
-- Remote backend access via **ngrok** for easy demo/testing
-
----
-
-## ✨ Key Features
-
-- 🔎 **Search & Recommend**  
-  Enter a movie title (supports fuzzy match) and get top similar recommendations from the backend.
-
-- 🎨 **Modern Compose UI**  
-  Branded dark theme, search card + results section, loading skeleton, and empty state UI.
-
-- 🧠 **Content-Based Recommendation Engine**  
-  Builds tags from `keywords + genres + overview`, uses TF-IDF vectorization (with n-grams) and cosine similarity.
-
-- 🖼️ **Auto Poster Loading**  
-  Uses OMDb `t=title` endpoint and displays poster thumbnails via Coil.
-
-- 🌍 **Backend Exposure via ngrok**  
-  Run backend locally and expose it via HTTPS ngrok URL for easy mobile testing.
-
----
-
-## 🏗️ Project Structure
-
-### Android (Kotlin / Compose)
-
-- `FirstScreen.kt` → UI: search, status, results list, cards, skeleton  
-- `TryMovUiColors.kt` → Color system (dark + gold)  
-- `ApiClient.kt` → Retrofit client for FastAPI endpoint  
-- `OmdbClient.kt` → Retrofit client for OMDb poster lookup  
-- `Recommendation.kt` → DTO models from backend  
-
-### Backend (FastAPI / Python)
-
-- `main.py` → FastAPI app exposing:
-  - `GET /` → health check
-  - `GET /items/{item}` → returns recommended movies
-- TF-IDF + cosine similarity pipeline using `tmdb_5000_movies.csv`
-
----
-
-## 🖼️ Screenshots & Demo
-
-Screenshots and demo are stored here:
-
-`https://github.com/Sourasamanta/ScreenShots/tree/main/TryMov`
-
-### App Screenshots
+**Android + FastAPI** movie recommendation platform using **TF-IDF cosine similarity**, **AWS Cognito** authentication, **DynamoDB** cloud persistence, and **Jetpack Compose** UI.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Sourasamanta/ScreenShots/main/TryMov/TryMov1.jpeg" width="240" />
-  <img src="https://raw.githubusercontent.com/Sourasamanta/ScreenShots/main/TryMov/TryMov2.jpeg" width="240" />
-  <img src="https://raw.githubusercontent.com/Sourasamanta/ScreenShots/main/TryMov/TryMov3.jpeg" width="240" />
+  <img src="https://raw.githubusercontent.com/Sourasamanta/ScreenShots/main/TryMov/TryMov1.jpeg" width="220" />
+  <img src="https://raw.githubusercontent.com/Sourasamanta/ScreenShots/main/TryMov/TryMov2.jpeg" width="220" />
+  <img src="https://raw.githubusercontent.com/Sourasamanta/ScreenShots/main/TryMov/TryMov3.jpeg" width="220" />
 </p>
 
-### Demo
-
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Sourasamanta/ScreenShots/main/TryMov/TryMovDemo.gif" width="320" />
+  <img src="https://raw.githubusercontent.com/Sourasamanta/ScreenShots/main/TryMov/TryMovDemo.gif" width="300" />
 </p>
 
 ---
 
-## 🛠️ Tech Stack
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **Content-Based Recommendations** | TF-IDF + cosine similarity on 4,803 movies from the TMDB dataset |
+| **Fuzzy Search** | Handles typos via `difflib.get_close_matches` |
+| **My List** | Add movies by IMDb ID, track status (Watching/Completed/Planned/Dropped), rate 0-10 |
+| **Cloud Sync** | Push local list to DynamoDB, pull on login |
+| **Authentication** | AWS Cognito OAuth 2.0 with JWT verification |
+| **Poster Loading** | OMDb poster lookup proxied through the backend |
+| **Offline Support** | Room database for local persistence; My List works without network |
+
+---
+
+## Architecture
+
+```
+Android App                    EC2 Backend                  AWS Services
++-----------------+           +------------------+         +---------------+
+| Compose UI      |           | FastAPI + Uvicorn|         | Cognito       |
+| ViewModels      |  HTTPS    | TF-IDF Engine    |         | (us-east-1)   |
+| Room DB         |---------->| TMDB/OMDb Proxy  |-------->| DynamoDB      |
+| Cognito OAuth   |  Bearer   | DynamoDB Client  |         | (eu-north-1)  |
++-----------------+  JWT      +------------------+         +---------------+
+```
+
+**Pattern:** Fat-client + thin-server. The backend owns ML recommendations and proxies external API calls. The Android client owns UI, local persistence, and authentication.
+
+---
+
+## Tech Stack
+
+### Android
+- **Kotlin** + **Jetpack Compose** (Material 3)
+- **Room** (local database)
+- **Retrofit** + **OkHttp** (networking with JWT interceptor)
+- **Coil** (image loading)
+- **AppAuth** (Cognito OAuth)
+- **Coroutines** + **StateFlow** (reactive data)
+
+### Backend
+- **Python 3.12** + **FastAPI** + **Uvicorn**
+- **scikit-learn** (TF-IDF vectorizer, cosine similarity)
+- **NLTK** (Porter stemmer, stopwords)
+- **pandas** (dataset processing)
+- **boto3** (DynamoDB)
+- **python-jose** (JWT verification)
+- **httpx** (TMDB/OMDb proxy calls)
+
+### AWS
+- **Cognito** — User pool with OAuth 2.0 (us-east-1)
+- **DynamoDB** — Movies, UserMovieInteraction, Users tables (eu-north-1)
+- **EC2** — t3.micro running the FastAPI backend (eu-north-1)
+
+---
+
+## Project Structure
+
+```
+TryMov/
+├── backend/
+│   ├── main.py              # FastAPI app, TF-IDF pipeline, all endpoints
+│   ├── auth.py              # Cognito JWT verification (JWKS)
+│   ├── dynamo.py            # DynamoDB CRUD operations
+│   ├── models.py            # Pydantic request/response models
+│   ├── requirements.txt     # Python dependencies
+│   └── trymov.service       # systemd unit file for EC2
+│
+├── TryMov/                  # Android project (Gradle)
+│   └── app/src/main/java/com/example/trymov/
+│       ├── auth/            # Cognito login flow
+│       │   ├── CognitoConfig.kt
+│       │   ├── LoginActivity.kt
+│       │   ├── LoginScreen.kt
+│       │   └── TokenManager.kt
+│       ├── data/
+│       │   ├── local/       # Room database, DAOs, entities
+│       │   ├── remote/      # TMDB API client (now proxied)
+│       │   └── repository/  # MovieRepository (single source of truth)
+│       ├── di/              # Manual dependency injection
+│       │   └── AppContainer.kt
+│       ├── fastapi/         # Backend API clients
+│       │   ├── Retrofit.kt
+│       │   ├── MovieAPI.kt
+│       │   ├── InteractionApi.kt
+│       │   ├── FastApiRepository.kt
+│       │   ├── InteractionRepository.kt
+│       │   ├── DataModel.kt
+│       │   └── InteractionModels.kt
+│       ├── model/           # Domain models
+│       ├── ui/
+│       │   ├── mylist/      # My List screen + ViewModel
+│       │   ├── discover/    # Discover screen factory
+│       │   └── theme/       # Compose theme
+│       ├── FirstScreen.kt   # Discover tab UI
+│       ├── MainActivity.kt  # Entry point + navigation
+│       ├── ViewModel.kt     # MovieViewModel (discover)
+│       └── Colors.kt        # TryMovUiColors
+│
+├── ARCHITECTURE.md          # Full technical documentation
+├── INTERVIEW_QA.md          # Interview preparation Q&A
+└── README.md                # This file
+```
+
+---
+
+## Setup
+
+### Prerequisites
+- Android Studio Ladybug or later
+- Python 3.10+
+- AWS account (Cognito + DynamoDB + EC2)
+
+### Backend (Local Development)
+
+```bash
+# Clone and enter the project
+git clone https://github.com/Sourasamanta/TryMov.git
+cd TryMov
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Download NLTK data
+python -c "import nltk; nltk.download('stopwords')"
+
+# Place the dataset
+# Download tmdb_5000_movies.csv from Kaggle and place in project root
+
+# Set environment variables
+export COGNITO_REGION=us-east-1
+export COGNITO_USER_POOL_ID=<your-pool-id>
+export COGNITO_APP_CLIENT_ID=<your-client-id>
+export AWS_DEFAULT_REGION=eu-north-1
+export TMDB_API_KEY=<your-tmdb-key>
+export OMDB_API_KEY=<your-omdb-key>
+
+# Run
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+### Backend (EC2 Production)
+
+```bash
+# Copy files to EC2
+scp -i key.pem main.py auth.py dynamo.py models.py requirements.txt ubuntu@<EC2_IP>:/home/ubuntu/trymov/
+
+# SSH in and set up
+ssh -i key.pem ubuntu@<EC2_IP>
+cd /home/ubuntu/trymov
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Copy systemd service
+sudo cp trymov.service /etc/systemd/system/
+# Edit to add your environment variables:
+sudo nano /etc/systemd/system/trymov.service
+
+sudo systemctl daemon-reload
+sudo systemctl enable trymov
+sudo systemctl start trymov
+```
 
 ### Android
 
-- **Kotlin**
-- **Jetpack Compose (Material 3)**
-- **Retrofit + OkHttp**
-- **Coroutines**
-- **Coil** (poster image loading)
-
-### Backend
-
-- **Python**
-- **FastAPI**
-- **Uvicorn**
-- **Pandas / NumPy**
-- **NLTK** (stopwords + stemming)
-- **Scikit-learn** (TF-IDF + cosine similarity)
+1. Open the `TryMov/` directory in Android Studio
+2. Create `local.properties` with:
+   ```properties
+   sdk.dir=/path/to/Android/sdk
+   EC2_BASE_URL=http://<your-ec2-ip>:8000/
+   ```
+3. Update `auth/CognitoConfig.kt` with your Cognito settings
+4. Build and run on device
 
 ---
 
-## ⚙️ Backend Setup (FastAPI)
+## API Endpoints
 
-### 1️⃣ Create virtual environment & install dependencies
-
-```bash
-python -m venv .venv
-
-# Windows:
-.venv\Scripts\activate
-# Mac/Linux:
-source .venv/bin/activate
-
-pip install fastapi uvicorn pandas numpy scikit-learn nltk
-```
-
-### 2️⃣ Place dataset
-
-Put `tmdb_5000_movies.csv` in the same folder as `main.py`.
-
-### 3️⃣ Run backend locally
-
-```bash
-python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Check in your browser:
-
-- `http://127.0.0.1:8000/` → `{"status":"ok"}`
-- `http://127.0.0.1:8000/items/inception`
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/` | No | Health check |
+| `GET` | `/items/{title}` | No | Content-based recommendations |
+| `POST` | `/movies` | Yes | Store movie in DynamoDB |
+| `GET` | `/movies` | Yes | List all stored movies |
+| `PUT` | `/movies/{id}` | Yes | Update movie fields |
+| `DELETE` | `/movies/{id}` | Yes | Delete a movie |
+| `POST` | `/interaction` | Yes | Save watch status + rating |
+| `GET` | `/interaction/{user_id}` | Yes | Get user's interaction history |
+| `PUT` | `/interaction/{movie_id}` | Yes | Update interaction |
+| `DELETE` | `/interaction/{movie_id}` | Yes | Delete interaction |
+| `GET` | `/tmdb/{imdb_id}` | Yes | Proxy: fetch movie from TMDB |
+| `GET` | `/poster/{title}` | Yes | Proxy: fetch poster from OMDb |
+| `GET` | `/users` | Yes | List all users |
 
 ---
 
-## 🌐 Expose Backend Using ngrok (for Android Testing)
+## How It Works
 
-### Step-by-step (recommended)
-
-#### 1. Install ngrok
-
-Download and install ngrok from the official site, then authenticate once:
-
-```bash
-ngrok config add-authtoken YOUR_NGROK_TOKEN
-```
-
-#### 2. Start your FastAPI server
-
-Make sure this is running:
-
-```bash
-python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-#### 3. Start ngrok tunnel
-
-In a new terminal:
-
-```bash
-ngrok http 8000
-```
-
-You'll get something like:
-
-```text
-Forwarding  https://miracle-unwilful-amira.ngrok-free.dev -> http://localhost:8000
-```
-
-#### 4. Update Android `BASE_URL`
-
-In your Android Retrofit client (`ApiClient.kt` or equivalent):
-
-```kotlin
-private const val BASE_URL = "https://miracle-unwilful-amira.ngrok-free.dev/"
-```
-
-**Important:** include the trailing `/`.
-
-#### 5. Test from Android
-
-Now the app can call:
-
-- `GET /` → health  
-- `GET /items/{item}` → recommendations  
+1. **User opens app** -> Cognito OAuth login -> ID token stored locally
+2. **Discover tab** -> User types movie title -> FastAPI fuzzy-matches against 4,803 titles -> Returns top 10 by cosine similarity -> Posters fetched via OMDb proxy
+3. **My List tab** -> User adds movie by IMDb ID -> Backend fetches metadata from TMDB -> Stored in Room (local) + DynamoDB (cloud)
+4. **Sync button** -> Pushes all local movies + interactions to DynamoDB
+5. **On login** -> Pulls movies + interactions from DynamoDB to local Room DB
 
 ---
 
-## 🚦 Quick Start: End-to-End Demo
+## DynamoDB Tables
 
-Follow these steps to go from zero to a working Android + FastAPI + ngrok setup.
-
-1️⃣ **Start FastAPI (backend)**
-
-```bash
-# (Optional) activate venv first
-# Windows: .venv\Scripts\activate
-# Mac/Linux: source .venv/bin/activate
-
-python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Verify:
-
-- `http://127.0.0.1:8000/`  
-- `http://127.0.0.1:8000/items/inception`
-
-2️⃣ **Expose backend with ngrok**
-
-```bash
-ngrok http 8000
-```
-
-Copy the HTTPS URL, e.g. `https://your-subdomain.ngrok-free.dev`
-
-3️⃣ **Update Android base URL**
-
-```kotlin
-private const val BASE_URL = "https://your-subdomain.ngrok-free.dev/"
-```
-
-- Must be **HTTPS**  
-- Must end with `/`  
-
-4️⃣ **Run the Android app**
-
-- Connect device or start emulator  
-- Run from Android Studio  
-- Search a movie (e.g., `inception`) and verify recommendations + posters  
+| Table | Partition Key | Sort Key | Attributes |
+|-------|--------------|----------|------------|
+| `Movies` | `movie_id` (S) | — | title, genres, overview |
+| `UserMovieInteraction` | `user_id` (S) | `movie_id` (S) | status, rating, timestamp |
+| `Users` | `user_id` (S) | — | name, email, created_at |
 
 ---
 
-## ✅ Important Android Notes (to avoid common errors)
+## Future Improvements
 
-**Ensure `BASE_URL` has trailing slash**  
-Retrofit requires:
-
-```kotlin
-private const val BASE_URL = "https://xxxxx.ngrok-free.dev/"
-```
-
-**Encode movie titles for the path**  
-Your endpoint uses `/items/{item}`.  
-If the user searches `"the dark knight"`, spaces will break the URL unless encoded.
-
-**Option A** (keep path param, encode on Android):
-
-```kotlin
-val safe = URLEncoder.encode(query, "UTF-8")
-api.recommend(safe)
-```
-
-**Option B** (recommended): change FastAPI to use query param:
-
-```text
-GET /recommend?title=The%20Dark%20Knight
-```
-
-**OMDb API key**  
-Replace:
-
-```kotlin
-apiKey = "YOUR_API_KEY"
-```
-
-with a real key (store it in `local.properties` / `BuildConfig`).
+- Collaborative filtering using user interaction data
+- Pre-computed similarity matrix (`.npy`) for faster cold starts
+- Pagination on `/movies` and `/interaction` endpoints
+- Push notifications for new recommendations
+- Multi-device sync with conflict resolution
+- CI/CD pipeline with GitHub Actions
+- ProGuard/R8 obfuscation for release builds
+- Unit and integration tests
 
 ---
 
-## 🧪 Example API Response
+## Author
 
-`GET /items/inception`
-
-```json
-{
-  "movie": "inception",
-  "top_n": 10,
-  "recommendations": [
-    { "title": "interstellar", "score": 0.812 },
-    { "title": "the prestige", "score": 0.771 }
-  ]
-}
-```
-
----
-
-## 🛣️ Future Improvements
-
-- Add caching for posters and recommendation results  
-- Add pagination / "load more"  
-- Improve fuzzy matching + handle duplicates by year/imdbId  
-- Precompute vectors and persist (faster startup)  
-- Add tests (unit + UI)  
-- Move from ngrok to deployed backend (Render / Fly.io / AWS)  
-
----
-
-## 👨‍💻 Author
-
-**Sourajit Samanta**  
-Android Developer | Kotlin | Jetpack Compose  
-
-⭐ If you like this project, consider giving it a star!
+**Sourajit Samanta**
+Android Developer | Kotlin | Jetpack Compose | AWS
 
 ---
